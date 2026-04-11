@@ -37,7 +37,7 @@ export const registerPluginSettings = async (): Promise<void> => {
       section: settingsSection,
       public: true,
       label: 'Local sync directory',
-      description: 'Example: /Users/sarsmini/Projects/MyRAG/workspace/raw/joplin',
+      description: 'Example: /path/to/joplin-mirror',
     },
     [autoSyncOnStartKey]: {
       value: false,
