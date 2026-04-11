@@ -1,15 +1,16 @@
 import joplin from 'api';
+import { ToastType } from 'api/types';
 import { JoplinRepository } from './export/joplinRepository';
 import { fullSync, incrementalSync } from './export/syncEngine';
 import { runSyncCommand } from './commands';
+import { loadPluginSettings, registerPluginSettings } from './settings';
+import { createRuntimeState } from './state';
+import { createSyncController, SyncInProgressError, type SyncRunResult } from './syncController';
 import {
-  loadPluginSettings,
-  registerPluginSettings,
-  syncDirectoryKey,
-} from './settings';
-import { renderPanelHtml } from './panel';
-import { createRuntimeState, setErrorState } from './state';
-import { createSyncController, SyncInProgressError } from './syncController';
+  buildErrorStatusSettingValues,
+  buildSuccessStatusSettingValues,
+  writeStatusSettingValues,
+} from './statusSettings';
 
 joplin.plugins.register({
   onStart: async function () {
@@ -26,93 +27,82 @@ joplin.plugins.register({
       now: () => new Date().toISOString(),
     });
 
-    const panel = await joplin.views.panels.create('joplinMdMirror.panel');
+    const persistSuccess = async (result: SyncRunResult) => {
+      await writeStatusSettingValues(
+        (key, value) => joplin.settings.setValue(key, value),
+        buildSuccessStatusSettingValues(result),
+      );
+    };
 
-    const refreshPanel = async () => {
-      const settings = await loadPluginSettings();
-      await joplin.views.panels.setHtml(panel, renderPanelHtml({
-        syncDirectory: settings.syncDirectory,
-        state,
-      }));
+    const persistError = async (input: {
+      mode: 'full' | 'incremental';
+      trigger: 'manual' | 'auto-sync-complete' | 'auto-startup';
+      ranAt: string;
+      errorMessage: string;
+    }) => {
+      await writeStatusSettingValues(
+        (key, value) => joplin.settings.setValue(key, value),
+        buildErrorStatusSettingValues(input),
+      );
     };
 
     const runMode = async (
       mode: 'full' | 'incremental',
-      trigger: 'manual' | 'auto-sync-complete',
+      trigger: 'manual' | 'auto-sync-complete' | 'auto-startup',
     ) => {
       const settings = await loadPluginSettings();
-      const repository = new JoplinRepository(joplin.data as any);
-      const runPromise = runSyncCommand({
-        mode,
-        trigger,
-        settings,
-        repository,
-        controller,
-      });
-      await refreshPanel();
+      const repository = new JoplinRepository(joplin.data as never);
+
       try {
-        await runPromise;
+        const result = await runSyncCommand({
+          mode,
+          trigger,
+          settings,
+          repository,
+          controller,
+        });
+        await persistSuccess(result);
+
+        if (trigger === 'manual') {
+          await joplin.views.dialogs.showToast({
+            message: result.message,
+            type: ToastType.Success,
+          });
+        }
       } catch (error) {
-        if (error instanceof SyncInProgressError && trigger === 'auto-sync-complete') {
+        if (error instanceof SyncInProgressError && trigger !== 'manual') {
           return;
         }
-        console.error(error);
+
+        const message = (error as Error).message;
+        const ranAt = new Date().toISOString();
+        await persistError({ mode, trigger, ranAt, errorMessage: message });
+
+        if (trigger === 'manual') {
+          await joplin.views.dialogs.showMessageBox(message);
+        }
       }
-      await refreshPanel();
     };
 
-    await joplin.views.panels.onMessage(panel, async (message: { type: string }) => {
-      if (message.type === 'browse') {
-        try {
-          const result = await joplin.views.dialogs.showOpenDialog({ properties: ['openDirectory'] });
-          const selectedPaths = Array.isArray(result?.filePaths)
-            ? result.filePaths
-            : Array.isArray(result)
-              ? result
-              : [];
-          if (selectedPaths.length > 0) {
-            await joplin.settings.setValue(syncDirectoryKey, selectedPaths[0]);
-          }
-        } catch (error) {
-          state = setErrorState(state, (error as Error).message);
-        }
-        await refreshPanel();
-        return;
-      }
-
-      if (message.type === 'full-sync') {
+    await joplin.commands.register({
+      name: 'joplinMdMirror.full',
+      label: 'Joplin Markdown Mirror: Full Sync',
+      execute: async () => {
         const answer = await joplin.views.dialogs.showMessageBox(
-          'Run Full Sync?\n\nThis will rewrite the mirrored Markdown files in the configured sync directory.'
+          'Run Full Sync?\n\nThis will rewrite the mirrored Markdown files in the configured sync directory.',
         );
-        if (answer === 0) {
-          await runMode('full', 'manual');
-        }
-        return;
-      }
-
-      if (message.type === 'incremental-sync') {
-        await runMode('incremental', 'manual');
-      }
+        if (answer !== 0) return;
+        await runMode('full', 'manual');
+      },
     });
 
-    const registerCommand = async (name: 'full' | 'incremental', label: string) => {
-      await joplin.commands.register({
-        name: `joplinMdMirror.${name}`,
-        label,
-        execute: async () => {
-          if (name === 'full') {
-            const answer = await joplin.views.dialogs.showMessageBox(
-              'Run Full Sync?\n\nThis will rewrite the mirrored Markdown files in the configured sync directory.'
-            );
-            if (answer !== 0) return;
-          }
-          await runMode(name, 'manual');
-        },
-      });
-    };
-
-    await registerCommand('full', 'Joplin Markdown Mirror: Full Sync');
-    await registerCommand('incremental', 'Joplin Markdown Mirror: Incremental Sync');
+    await joplin.commands.register({
+      name: 'joplinMdMirror.incremental',
+      label: 'Joplin Markdown Mirror: Incremental Sync',
+      execute: async () => {
+        await runMode('incremental', 'manual');
+      },
+    });
 
     await joplin.workspace.onSyncComplete(async () => {
       const settings = await loadPluginSettings();
@@ -122,9 +112,7 @@ joplin.plugins.register({
 
     const settings = await loadPluginSettings();
     if (settings.autoSyncOnStart) {
-      await runMode('incremental', 'manual');
+      await runMode('incremental', 'auto-startup');
     }
-
-    await refreshPanel();
   },
 });

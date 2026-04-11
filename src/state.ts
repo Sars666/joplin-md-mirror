@@ -1,6 +1,6 @@
 import type { SyncSummary } from './types';
 
-export type SyncTrigger = 'manual' | 'auto-sync-complete';
+export type SyncTrigger = 'manual' | 'auto-sync-complete' | 'auto-startup';
 export type RuntimeStatus = 'idle' | 'running' | 'success' | 'error';
 
 export type RuntimeState = {

@@ -47,7 +47,7 @@ describe('syncController', () => {
     await expect(
       controller.run({
         mode: 'incremental',
-        trigger: 'auto-sync-complete',
+        trigger: 'auto-startup',
         syncDirectory: '/tmp/joplin-mirror',
         repository: { listExportNotes: jest.fn() },
       }),

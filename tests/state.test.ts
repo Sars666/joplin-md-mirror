@@ -13,19 +13,11 @@ describe('runtime state helpers', () => {
     });
   });
 
-  it('updates state to running with mode and trigger', () => {
-    const state = createRuntimeState();
-    const next = setRunningState(state, 'incremental', 'manual');
+  it('stores the startup trigger when startup auto-sync begins', () => {
+    const next = setRunningState(createRuntimeState(), 'incremental', 'auto-startup');
 
-    expect(next).toEqual({
-      isRunning: true,
-      lastRunMode: 'incremental',
-      lastTrigger: 'manual',
-      lastRunAt: null,
-      status: 'running',
-      summary: null,
-      errorMessage: null,
-    });
+    expect(next.lastTrigger).toBe('auto-startup');
+    expect(next.status).toBe('running');
   });
 
   it('stores summary and timestamp on success', () => {

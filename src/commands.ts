@@ -21,7 +21,7 @@ export const runSyncCommand = async ({
   controller,
 }: RunSyncDeps) => {
   if (!settings.syncDirectory.trim()) {
-    throw new Error('Set a sync directory before running sync.');
+    throw new Error('Please choose a local sync directory first.');
   }
 
   return controller.run({

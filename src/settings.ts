@@ -1,15 +1,26 @@
 import joplin from 'api';
-import { SettingItemType } from 'api/types';
+import { SettingItemSubType, SettingItemType } from 'api/types';
 
 export const settingsSection = 'joplinMdMirror';
 export const syncDirectoryKey = 'syncDirectory';
 export const autoSyncOnStartKey = 'autoSyncOnStart';
 export const autoSyncAfterJoplinSyncCompleteKey = 'autoSyncAfterJoplinSyncComplete';
+export const lastSyncModeKey = 'lastSyncMode';
+export const lastSyncTriggerKey = 'lastSyncTrigger';
+export const lastSyncTimeKey = 'lastSyncTime';
+export const lastSyncResultKey = 'lastSyncResult';
 
 export type PluginSettings = {
   syncDirectory: string;
   autoSyncOnStart: boolean;
   autoSyncAfterJoplinSyncComplete: boolean;
+};
+
+export type StatusSettingValues = {
+  lastSyncMode: string;
+  lastSyncTrigger: string;
+  lastSyncTime: string;
+  lastSyncResult: string;
 };
 
 export const registerPluginSettings = async (): Promise<void> => {
@@ -22,6 +33,7 @@ export const registerPluginSettings = async (): Promise<void> => {
     [syncDirectoryKey]: {
       value: '',
       type: SettingItemType.String,
+      subType: SettingItemSubType.DirectoryPath,
       section: settingsSection,
       public: true,
       label: 'Local sync directory',
@@ -41,6 +53,34 @@ export const registerPluginSettings = async (): Promise<void> => {
       public: true,
       label: 'Run incremental sync after Joplin sync completes',
     },
+    [lastSyncModeKey]: {
+      value: '',
+      type: SettingItemType.String,
+      section: settingsSection,
+      public: true,
+      label: 'Last sync mode',
+    },
+    [lastSyncTriggerKey]: {
+      value: '',
+      type: SettingItemType.String,
+      section: settingsSection,
+      public: true,
+      label: 'Last sync trigger',
+    },
+    [lastSyncTimeKey]: {
+      value: '',
+      type: SettingItemType.String,
+      section: settingsSection,
+      public: true,
+      label: 'Last sync time',
+    },
+    [lastSyncResultKey]: {
+      value: '',
+      type: SettingItemType.String,
+      section: settingsSection,
+      public: true,
+      label: 'Last sync result',
+    },
   });
 };
 
@@ -50,7 +90,6 @@ export const loadPluginSettings = async (): Promise<PluginSettings> => {
     autoSyncOnStartKey,
     autoSyncAfterJoplinSyncCompleteKey,
   ]);
-
   return {
     syncDirectory: String(values[syncDirectoryKey] ?? ''),
     autoSyncOnStart: Boolean(values[autoSyncOnStartKey]),

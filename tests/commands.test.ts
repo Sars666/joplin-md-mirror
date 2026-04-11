@@ -1,7 +1,7 @@
 import { runSyncCommand } from '../src/commands';
 
 describe('runSyncCommand', () => {
-  it('throws a clear error when no sync directory is configured', async () => {
+  it('throws the settings-first error when no sync directory is configured', async () => {
     await expect(
       runSyncCommand({
         mode: 'full',
@@ -10,7 +10,7 @@ describe('runSyncCommand', () => {
         repository: { listExportNotes: jest.fn() },
         controller: { run: jest.fn() },
       }),
-    ).rejects.toThrow('Set a sync directory before running sync.');
+    ).rejects.toThrow('Please choose a local sync directory first.');
   });
 
   it('returns the structured controller result for the caller to display', async () => {
