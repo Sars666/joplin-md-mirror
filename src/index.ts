@@ -46,6 +46,18 @@ joplin.plugins.register({
       );
     };
 
+    const toastMessageFor = (result: SyncRunResult): string => {
+      if (result.trigger === 'auto-startup') {
+        return `Automatic startup sync complete — created ${result.summary.created}, updated ${result.summary.updated}, deleted ${result.summary.deleted}, skipped ${result.summary.skipped}.`;
+      }
+
+      if (result.trigger === 'auto-sync-complete') {
+        return `Automatic incremental sync complete — created ${result.summary.created}, updated ${result.summary.updated}, deleted ${result.summary.deleted}, skipped ${result.summary.skipped}.`;
+      }
+
+      return result.message;
+    };
+
     const runMode = async (
       mode: 'full' | 'incremental',
       trigger: 'manual' | 'auto-sync-complete' | 'auto-startup',
@@ -63,12 +75,11 @@ joplin.plugins.register({
         });
         await persistSuccess(result);
 
-        if (trigger === 'manual') {
-          await joplin.views.dialogs.showToast({
-            message: result.message,
-            type: ToastType.Success,
-          });
-        }
+        await joplin.views.dialogs.showToast({
+          message: toastMessageFor(result),
+          type: ToastType.Success,
+          timestamp: Date.now(),
+        });
       } catch (error) {
         if (error instanceof SyncInProgressError && trigger !== 'manual') {
           return;

@@ -10,11 +10,11 @@ const values = jest.fn(async () => ({
   autoSyncAfterJoplinSyncComplete: true,
 }));
 
-const runSyncCommandMock: jest.Mock = jest.fn(async (_input) => ({
-  message: 'Incremental sync complete — created 1, updated 2, deleted 1, skipped 3.',
+const runSyncCommandMock: jest.Mock = jest.fn(async (input) => ({
+  message: `${input.mode === 'full' ? 'Full sync' : 'Incremental sync'} complete — created 1, updated 2, deleted 1, skipped 3.`,
   summary: { created: 1, updated: 2, deleted: 1, skipped: 3, errors: [] },
-  mode: 'incremental',
-  trigger: 'manual',
+  mode: input.mode,
+  trigger: input.trigger,
   ranAt: '2026-04-11T07:00:00.000Z',
 }));
 const writeStatusSettingValuesMock: jest.Mock = jest.fn(async (_setValue, _values) => undefined);
@@ -145,13 +145,13 @@ describe('plugin orchestration', () => {
       autoSyncAfterJoplinSyncComplete: true,
     });
     runSyncCommandMock.mockReset();
-    runSyncCommandMock.mockResolvedValue({
-      message: 'Incremental sync complete — created 1, updated 2, deleted 1, skipped 3.',
+    runSyncCommandMock.mockImplementation(async (input) => ({
+      message: `${input.mode === 'full' ? 'Full sync' : 'Incremental sync'} complete — created 1, updated 2, deleted 1, skipped 3.`,
       summary: { created: 1, updated: 2, deleted: 1, skipped: 3, errors: [] },
-      mode: 'incremental',
-      trigger: 'manual',
+      mode: input.mode,
+      trigger: input.trigger,
       ranAt: '2026-04-11T07:00:00.000Z',
-    });
+    }));
     writeStatusSettingValuesMock.mockReset();
     writeStatusSettingValuesMock.mockResolvedValue(undefined);
     buildSuccessStatusSettingValues.mockClear();
@@ -221,10 +221,11 @@ describe('plugin orchestration', () => {
     expect(showToast).toHaveBeenCalledWith(expect.objectContaining({
       message: expect.stringContaining('sync complete'),
       type: 'success',
+      timestamp: expect.any(Number),
     }));
   });
 
-  it('runs incremental sync after Joplin sync completes when the setting is enabled', async () => {
+  it('shows a toast after incremental sync completes when auto-sync-after-sync is enabled', async () => {
     await import('../src/index');
     const plugin = register.mock.calls[0][0];
     await plugin.onStart();
@@ -236,9 +237,14 @@ describe('plugin orchestration', () => {
       mode: 'incremental',
       trigger: 'auto-sync-complete',
     }));
+    expect(showToast).toHaveBeenCalledWith(expect.objectContaining({
+      message: expect.stringContaining('Automatic incremental sync complete'),
+      type: 'success',
+      timestamp: expect.any(Number),
+    }));
   });
 
-  it('runs incremental sync on startup when enabled', async () => {
+  it('shows a toast after startup auto-sync completes', async () => {
     loadPluginSettingsMock.mockResolvedValue({
       syncDirectory: '/tmp/joplin-mirror',
       autoSyncOnStart: true,
@@ -252,6 +258,11 @@ describe('plugin orchestration', () => {
     expect(runSyncCommandMock).toHaveBeenCalledWith(expect.objectContaining({
       mode: 'incremental',
       trigger: 'auto-startup',
+    }));
+    expect(showToast).toHaveBeenCalledWith(expect.objectContaining({
+      message: expect.stringContaining('Automatic startup sync complete'),
+      type: 'success',
+      timestamp: expect.any(Number),
     }));
   });
 
