@@ -1,46 +1,118 @@
 import joplin from 'api';
+import { ToastType } from 'api/types';
 import { JoplinRepository } from './export/joplinRepository';
 import { fullSync, incrementalSync } from './export/syncEngine';
 import { runSyncCommand } from './commands';
 import { loadPluginSettings, registerPluginSettings } from './settings';
+import { createRuntimeState } from './state';
+import { createSyncController, SyncInProgressError, type SyncRunResult } from './syncController';
+import {
+  buildErrorStatusSettingValues,
+  buildSuccessStatusSettingValues,
+  writeStatusSettingValues,
+} from './statusSettings';
 
 joplin.plugins.register({
   onStart: async function () {
     await registerPluginSettings();
 
-    const registerCommand = async (name: 'full' | 'incremental', label: string) => {
-      await joplin.commands.register({
-        name: `joplinMdMirror.${name}`,
-        label,
-        execute: async () => {
-          const settings = await loadPluginSettings();
-          const repository = new JoplinRepository(joplin.data as any);
-          const message = await runSyncCommand({
-            mode: name,
-            settings,
-            repository,
-            fullSync,
-            incrementalSync,
-          });
-          console.info(message);
-        },
-      });
+    let state = createRuntimeState();
+    const controller = createSyncController({
+      getState: () => state,
+      setState: (next) => {
+        state = next;
+      },
+      fullSync,
+      incrementalSync,
+      now: () => new Date().toISOString(),
+    });
+
+    const persistSuccess = async (result: SyncRunResult) => {
+      await writeStatusSettingValues(
+        (key, value) => joplin.settings.setValue(key, value),
+        buildSuccessStatusSettingValues(result),
+      );
     };
 
-    await registerCommand('full', 'Joplin Markdown Mirror: Full Sync');
-    await registerCommand('incremental', 'Joplin Markdown Mirror: Incremental Sync');
+    const persistError = async (input: {
+      mode: 'full' | 'incremental';
+      trigger: 'manual' | 'auto-sync-complete' | 'auto-startup';
+      ranAt: string;
+      errorMessage: string;
+    }) => {
+      await writeStatusSettingValues(
+        (key, value) => joplin.settings.setValue(key, value),
+        buildErrorStatusSettingValues(input),
+      );
+    };
+
+    const runMode = async (
+      mode: 'full' | 'incremental',
+      trigger: 'manual' | 'auto-sync-complete' | 'auto-startup',
+    ) => {
+      const settings = await loadPluginSettings();
+      const repository = new JoplinRepository(joplin.data as never);
+
+      try {
+        const result = await runSyncCommand({
+          mode,
+          trigger,
+          settings,
+          repository,
+          controller,
+        });
+        await persistSuccess(result);
+
+        if (trigger === 'manual') {
+          await joplin.views.dialogs.showToast({
+            message: result.message,
+            type: ToastType.Success,
+          });
+        }
+      } catch (error) {
+        if (error instanceof SyncInProgressError && trigger !== 'manual') {
+          return;
+        }
+
+        const message = (error as Error).message;
+        const ranAt = new Date().toISOString();
+        await persistError({ mode, trigger, ranAt, errorMessage: message });
+
+        if (trigger === 'manual') {
+          await joplin.views.dialogs.showMessageBox(message);
+        }
+      }
+    };
+
+    await joplin.commands.register({
+      name: 'joplinMdMirror.full',
+      label: 'Joplin Markdown Mirror: Full Sync',
+      execute: async () => {
+        const answer = await joplin.views.dialogs.showMessageBox(
+          'Run Full Sync?\n\nThis will rewrite the mirrored Markdown files in the configured sync directory.',
+        );
+        if (answer !== 0) return;
+        await runMode('full', 'manual');
+      },
+    });
+
+    await joplin.commands.register({
+      name: 'joplinMdMirror.incremental',
+      label: 'Joplin Markdown Mirror: Incremental Sync',
+      execute: async () => {
+        await runMode('incremental', 'manual');
+      },
+    });
+
+    await joplin.workspace.onSyncComplete(async () => {
+      const settings = await loadPluginSettings();
+      if (!settings.autoSyncAfterJoplinSyncComplete) return;
+      await runMode('incremental', 'auto-sync-complete');
+    });
 
     const settings = await loadPluginSettings();
     if (settings.autoSyncOnStart) {
-      const repository = new JoplinRepository(joplin.data as any);
-      const message = await runSyncCommand({
-        mode: 'incremental',
-        settings,
-        repository,
-        fullSync,
-        incrementalSync,
-      });
-      console.info(message);
+      await runMode('incremental', 'auto-startup');
     }
   },
 });

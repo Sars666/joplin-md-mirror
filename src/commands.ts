@@ -1,37 +1,33 @@
-import type { SyncSummary } from './types';
 import type { PluginSettings } from './settings';
 import type { NoteRepository } from './export/syncEngine';
+import type { SyncController } from './syncController';
+import type { SyncTrigger } from './state';
 
 export type RunSyncMode = 'full' | 'incremental';
 
 export type RunSyncDeps = {
   mode: RunSyncMode;
+  trigger: SyncTrigger;
   settings: PluginSettings;
   repository: NoteRepository;
-  fullSync: (repository: NoteRepository, baseDir: string) => Promise<SyncSummary>;
-  incrementalSync: (repository: NoteRepository, baseDir: string) => Promise<SyncSummary>;
-};
-
-const formatSummary = (mode: RunSyncMode, summary: SyncSummary): string => {
-  const modeLabel = mode === 'full' ? 'Full sync' : 'Incremental sync';
-  return `${modeLabel} complete — created ${summary.created}, updated ${summary.updated}, deleted ${summary.deleted}, skipped ${summary.skipped}.`;
+  controller: SyncController;
 };
 
 export const runSyncCommand = async ({
   mode,
+  trigger,
   settings,
   repository,
-  fullSync,
-  incrementalSync,
-}: RunSyncDeps): Promise<string> => {
+  controller,
+}: RunSyncDeps) => {
   if (!settings.syncDirectory.trim()) {
-    throw new Error('Set a sync directory before running sync.');
+    throw new Error('Please choose a local sync directory first.');
   }
 
-  const summary =
-    mode === 'full'
-      ? await fullSync(repository, settings.syncDirectory)
-      : await incrementalSync(repository, settings.syncDirectory);
-
-  return formatSummary(mode, summary);
+  return controller.run({
+    mode,
+    trigger,
+    syncDirectory: settings.syncDirectory,
+    repository,
+  });
 };
