@@ -51,8 +51,10 @@ export const fullSync = async (repository: NoteRepository, baseDir: string): Pro
   const nextManifest: Record<string, ManifestEntry> = {};
   const summary: SyncSummary = { created: 0, updated: 0, deleted: 0, skipped: 0, errors: [] };
   const notes = await repository.listExportNotes();
+  const seenIds = new Set<string>();
 
   for (const note of notes) {
+    seenIds.add(note.id);
     const entry = await writeNote(baseDir, note);
     nextManifest[note.id] = entry;
 
@@ -63,6 +65,12 @@ export const fullSync = async (repository: NoteRepository, baseDir: string): Pro
     } else {
       summary.skipped += 1;
     }
+  }
+
+  for (const [noteId, previous] of Object.entries(previousManifest)) {
+    if (seenIds.has(noteId)) continue;
+    await fs.rm(previous.filePath, { force: true });
+    summary.deleted += 1;
   }
 
   await saveManifest(baseDir, nextManifest);
