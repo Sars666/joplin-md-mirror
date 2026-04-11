@@ -1,0 +1,16 @@
+{
+  "manifest_version": 1,
+  "id": "com.sarsmini.joplin-md-mirror",
+  "app_min_version": "3.0",
+  "version": "0.1.0",
+  "name": "Joplin Markdown Mirror",
+  "description": "Mirror Joplin notes to a local Markdown directory for personal RAG workflows.",
+  "author": "sarsmini",
+  "homepage_url": "https://github.com/Sars666/joplin-md-mirror",
+  "repository_url": "https://github.com/Sars666/joplin-md-mirror",
+  "keywords": ["joplin", "markdown", "rag"],
+  "categories": ["files", "personal knowledge management"],
+  "screenshots": [],
+  "icons": {},
+  "promo_tile": {}
+}
