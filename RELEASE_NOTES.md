@@ -1,5 +1,15 @@
 # Release Notes
 
+## 0.1.3
+
+Refreshes the public-facing plugin documentation so the README reads like a user-oriented plugin page instead of internal project notes.
+
+### Included
+
+- Rewritten README with a clearer product overview
+- User-facing explanation of sync workflow, settings, and commands
+- Public installation and repository information
+
 ## 0.1.2
 
 Refreshes the plugin's published visuals with the final icon, screenshot, and promo tile assets.
@@ -33,7 +43,7 @@ Adds a user-facing toggle to enable or disable sync success toast notifications 
 
 ## 0.1.0
 
-Initial public-ready baseline for Joplin Markdown Mirror.
+Initial release of Joplin Markdown Mirror.
 
 ### Included
 
