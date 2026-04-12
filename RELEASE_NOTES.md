@@ -1,5 +1,20 @@
 # Release Notes
 
+## 0.1.2
+
+Refreshes the plugin's published visuals with the final icon, screenshot, and promo tile assets.
+
+### Included
+
+- Updated plugin icon asset
+- Updated settings screenshot asset
+- Updated promo tile asset
+
+### Notes
+
+- The plugin ID remains `com.sarsmini.joplin-md-mirror` for compatibility with existing installs.
+- The public repository for this release is `https://github.com/Sars666/joplin-md-mirror`.
+
 ## 0.1.1
 
 Adds a user-facing toggle to enable or disable sync success toast notifications while keeping toast behavior enabled by default.
