@@ -17,4 +17,4 @@ Initial public-ready baseline for Joplin Markdown Mirror.
 ### Notes
 
 - The plugin ID remains `com.sarsmini.joplin-md-mirror` for compatibility with existing installs.
-- `homepage_url` and `repository_url` are intentionally blank until a public repository is created.
+- The public repository for this release is `https://github.com/Sars666/joplin-md-mirror`.
