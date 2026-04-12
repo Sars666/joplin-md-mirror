@@ -6,7 +6,7 @@ describe('runSyncCommand', () => {
       runSyncCommand({
         mode: 'full',
         trigger: 'manual',
-        settings: { syncDirectory: '', autoSyncOnStart: false, autoSyncAfterJoplinSyncComplete: false },
+        settings: { syncDirectory: '', autoSyncOnStart: false, autoSyncAfterJoplinSyncComplete: false, enableSyncSuccessToast: true },
         repository: { listExportNotes: jest.fn() },
         controller: { run: jest.fn() },
       }),
@@ -17,7 +17,7 @@ describe('runSyncCommand', () => {
     const result = await runSyncCommand({
       mode: 'incremental',
       trigger: 'manual',
-      settings: { syncDirectory: '/tmp/joplin-mirror', autoSyncOnStart: true, autoSyncAfterJoplinSyncComplete: false },
+      settings: { syncDirectory: '/tmp/joplin-mirror', autoSyncOnStart: true, autoSyncAfterJoplinSyncComplete: false, enableSyncSuccessToast: true },
       repository: { listExportNotes: jest.fn() },
       controller: {
         run: jest.fn(async () => ({

@@ -8,6 +8,7 @@ const values = jest.fn(async () => ({
   syncDirectory: '/tmp/joplin-mirror',
   autoSyncOnStart: false,
   autoSyncAfterJoplinSyncComplete: true,
+  enableSyncSuccessToast: true,
 }));
 
 const runSyncCommandMock: jest.Mock = jest.fn(async (input) => ({
@@ -34,6 +35,7 @@ const loadPluginSettingsMock = jest.fn(async () => ({
   syncDirectory: '/tmp/joplin-mirror',
   autoSyncOnStart: false,
   autoSyncAfterJoplinSyncComplete: true,
+  enableSyncSuccessToast: true,
 }));
 const registerPluginSettingsMock = jest.fn(async () => undefined);
 const createRuntimeStateMock = jest.fn(() => ({
@@ -143,6 +145,7 @@ describe('plugin orchestration', () => {
       syncDirectory: '/tmp/joplin-mirror',
       autoSyncOnStart: false,
       autoSyncAfterJoplinSyncComplete: true,
+      enableSyncSuccessToast: true,
     });
     runSyncCommandMock.mockReset();
     runSyncCommandMock.mockImplementation(async (input) => ({
@@ -161,6 +164,7 @@ describe('plugin orchestration', () => {
       syncDirectory: '/tmp/joplin-mirror',
       autoSyncOnStart: false,
       autoSyncAfterJoplinSyncComplete: true,
+      enableSyncSuccessToast: true,
     });
     registerPluginSettingsMock.mockReset();
     registerPluginSettingsMock.mockResolvedValue(undefined);
@@ -249,6 +253,7 @@ describe('plugin orchestration', () => {
       syncDirectory: '/tmp/joplin-mirror',
       autoSyncOnStart: true,
       autoSyncAfterJoplinSyncComplete: false,
+      enableSyncSuccessToast: true,
     });
 
     await import('../src/index');
@@ -264,6 +269,31 @@ describe('plugin orchestration', () => {
       type: 'success',
       timestamp: expect.any(Number),
     }));
+  });
+
+  it('does not show a toast when sync success toast is disabled', async () => {
+    loadPluginSettingsMock.mockResolvedValue({
+      syncDirectory: '/tmp/joplin-mirror',
+      autoSyncOnStart: false,
+      autoSyncAfterJoplinSyncComplete: true,
+      enableSyncSuccessToast: false,
+    });
+
+    await import('../src/index');
+    const plugin = register.mock.calls[0][0];
+    await plugin.onStart();
+
+    const incrementalCommand = registerCommand.mock.calls.find(
+      ([command]) => command.name === 'joplinMdMirror.incremental',
+    )?.[0];
+
+    await incrementalCommand.execute();
+
+    expect(runSyncCommandMock).toHaveBeenCalledWith(expect.objectContaining({
+      mode: 'incremental',
+      trigger: 'manual',
+    }));
+    expect(showToast).not.toHaveBeenCalled();
   });
 
   it('silently ignores auto-triggered re-entry without rewriting status', async () => {

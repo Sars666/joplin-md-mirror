@@ -75,11 +75,13 @@ joplin.plugins.register({
         });
         await persistSuccess(result);
 
-        await joplin.views.dialogs.showToast({
-          message: toastMessageFor(result),
-          type: ToastType.Success,
-          timestamp: Date.now(),
-        });
+        if (settings.enableSyncSuccessToast) {
+          await joplin.views.dialogs.showToast({
+            message: toastMessageFor(result),
+            type: ToastType.Success,
+            timestamp: Date.now(),
+          });
+        }
       } catch (error) {
         if (error instanceof SyncInProgressError && trigger !== 'manual') {
           return;

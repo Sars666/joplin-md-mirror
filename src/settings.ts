@@ -5,6 +5,7 @@ export const settingsSection = 'joplinMdMirror';
 export const syncDirectoryKey = 'syncDirectory';
 export const autoSyncOnStartKey = 'autoSyncOnStart';
 export const autoSyncAfterJoplinSyncCompleteKey = 'autoSyncAfterJoplinSyncComplete';
+export const enableSyncSuccessToastKey = 'enableSyncSuccessToast';
 export const lastSyncModeKey = 'lastSyncMode';
 export const lastSyncTriggerKey = 'lastSyncTrigger';
 export const lastSyncTimeKey = 'lastSyncTime';
@@ -14,6 +15,7 @@ export type PluginSettings = {
   syncDirectory: string;
   autoSyncOnStart: boolean;
   autoSyncAfterJoplinSyncComplete: boolean;
+  enableSyncSuccessToast: boolean;
 };
 
 export type StatusSettingValues = {
@@ -53,6 +55,13 @@ export const registerPluginSettings = async (): Promise<void> => {
       public: true,
       label: 'Run incremental sync after Joplin sync completes',
     },
+    [enableSyncSuccessToastKey]: {
+      value: true,
+      type: SettingItemType.Bool,
+      section: settingsSection,
+      public: true,
+      label: 'Enable sync success toast',
+    },
     [lastSyncModeKey]: {
       value: '',
       type: SettingItemType.String,
@@ -89,10 +98,12 @@ export const loadPluginSettings = async (): Promise<PluginSettings> => {
     syncDirectoryKey,
     autoSyncOnStartKey,
     autoSyncAfterJoplinSyncCompleteKey,
+    enableSyncSuccessToastKey,
   ]);
   return {
     syncDirectory: String(values[syncDirectoryKey] ?? ''),
     autoSyncOnStart: Boolean(values[autoSyncOnStartKey]),
     autoSyncAfterJoplinSyncComplete: Boolean(values[autoSyncAfterJoplinSyncCompleteKey]),
+    enableSyncSuccessToast: values[enableSyncSuccessToastKey] === undefined ? true : Boolean(values[enableSyncSuccessToastKey]),
   };
 };

@@ -39,6 +39,7 @@ import { SettingItemSubType, SettingItemType } from 'api/types';
 import {
   autoSyncAfterJoplinSyncCompleteKey,
   autoSyncOnStartKey,
+  enableSyncSuccessToastKey,
   lastSyncModeKey,
   lastSyncResultKey,
   lastSyncTimeKey,
@@ -88,6 +89,11 @@ describe('plugin settings', () => {
         type: SettingItemType.Bool,
         public: true,
       }),
+      [enableSyncSuccessToastKey]: expect.objectContaining({
+        value: true,
+        type: SettingItemType.Bool,
+        public: true,
+      }),
       [lastSyncModeKey]: expect.objectContaining({
         value: '',
         type: SettingItemType.String,
@@ -116,6 +122,7 @@ describe('plugin settings', () => {
       [syncDirectoryKey]: '/tmp/joplin-mirror',
       [autoSyncOnStartKey]: true,
       [autoSyncAfterJoplinSyncCompleteKey]: false,
+      [enableSyncSuccessToastKey]: false,
       [lastSyncModeKey]: 'incremental',
     });
 
@@ -123,12 +130,14 @@ describe('plugin settings', () => {
       syncDirectory: '/tmp/joplin-mirror',
       autoSyncOnStart: true,
       autoSyncAfterJoplinSyncComplete: false,
+      enableSyncSuccessToast: false,
     });
 
     expect(settingsApi.values).toHaveBeenCalledWith([
       syncDirectoryKey,
       autoSyncOnStartKey,
       autoSyncAfterJoplinSyncCompleteKey,
+      enableSyncSuccessToastKey,
     ]);
   });
 
@@ -144,12 +153,14 @@ describe('plugin settings', () => {
       syncDirectory: '',
       autoSyncOnStart: false,
       autoSyncAfterJoplinSyncComplete: false,
+      enableSyncSuccessToast: true,
     });
 
     expect(settingsApi.values).toHaveBeenCalledWith([
       syncDirectoryKey,
       autoSyncOnStartKey,
       autoSyncAfterJoplinSyncCompleteKey,
+      enableSyncSuccessToastKey,
     ]);
   });
 });
