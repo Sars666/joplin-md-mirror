@@ -1,5 +1,16 @@
 # Release Notes
 
+## 0.2.0
+
+Refreshes the plugin package for a cleaner public release and keeps the toast toggle behavior available on the current release line.
+
+### Included
+
+- Repacked the plugin as version 0.2.0 from the current public codebase
+- Corrected package metadata so version sources stay aligned during release builds
+- Reduced the oversized icon asset to a true 128×128 release icon to keep the package leaner
+- Retained the sync success toast toggle introduced on the 0.1.x line
+
 ## 0.1.3
 
 Refreshes the public-facing plugin documentation so the README reads like a user-oriented plugin page instead of internal project notes.
