@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "id": "com.sarsmini.joplin-md-mirror",
   "app_min_version": "3.0",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "name": "Joplin Markdown Mirror",
   "description": "Mirror Joplin notes to a local Markdown directory for personal RAG workflows.",
   "author": "sars",

@@ -1,5 +1,15 @@
 # Release Notes
 
+## 0.2.1
+
+Fixes invalid YAML front matter when a note has no tags and strengthens export regression coverage.
+
+### Included
+
+- Emit an explicit empty YAML sequence (`tags: []`) for notes without tags
+- Preserve the existing YAML list output for tagged notes
+- Verify empty tags, non-empty tags, YAML-sensitive tag values, and complete front matter parsing
+
 ## 0.2.0
 
 Refreshes the plugin package for a cleaner public release and keeps the toast toggle behavior available on the current release line.
